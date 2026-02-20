@@ -48,7 +48,7 @@ Este proyecto forma parte de mi aprendizaje fullstack enfocado principalmente en
 
 ---
 
-✨ Características actuales del sistema
+✨ Características del sistema
 
 - Registro de usuarios
 - Login con autenticación JWT
@@ -57,25 +57,9 @@ Este proyecto forma parte de mi aprendizaje fullstack enfocado principalmente en
 - Conexión a base de datos en MongoDB Atlas
 - Logging de peticiones
 - Middleware configurado
-
-Próximas features:
-
 - CRUD de productos
 - Sistema de stock por usuario
-- Estadísticas de inventario
-- Dashboard con métricas
 - Control de movimientos de stock
-
----
-
-🚧 Próximas funcionalidades
-
-1. CRUD de productos: Gestión total de artículos.
-
-2. Stock por usuario: Inventarios privados y aislados.
-
-3. Dashboard: Visualización de métricas clave.
-
-4. Movimientos: Historial de entradas y salidas de mercadería.
+- Estadísticas de inventario
 
 ---
