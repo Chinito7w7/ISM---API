@@ -19,6 +19,10 @@ const productSchema = new Schema(
     category: {
       type: String,
     },
+    description: {
+      type: String,
+      trim: true,
+    },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
