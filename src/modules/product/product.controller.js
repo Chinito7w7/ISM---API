@@ -1,5 +1,5 @@
 import Product from "./product.model.js";
-
+import mongoose from "mongoose";
 export const createProduct = async (req, res) => {
   try {
     const product = new Product({
@@ -62,5 +62,65 @@ export const updateProduct = async (req, res) => {
     res.json(updatedProduct);
   } catch (error) {
     res.status(500).json({ message: "Error al actualizar el producto" });
+  }
+};
+
+export const deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findOneAndDelete({
+      _id: req.params.id,
+      owner: req.user.id,
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: "Producto no encontrado" });
+    }
+
+    res.json({ message: "Producto eliminado exitosamente" });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error al borrar el producto",
+    });
+  }
+};
+
+export const getProductStats = async (req, res) => {
+  try {
+    const ownerId = req.user.id;
+    const totalProducts = await Product.countDocuments({ owner: ownerId });
+
+    const ownerObjectId = new mongoose.Types.ObjectId(ownerId);
+
+    const totalStock = await Product.aggregate([
+      { $match: { owner: ownerObjectId } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$stock" },
+        },
+      },
+    ]);
+    const lowStockProducts = await Product.countDocuments({
+      owner: ownerId,
+      stock: { $lte: 5 },
+    }).select("name stock");
+
+    const lastProductCreated = await Product.findOne({ owner: ownerId })
+      .sort({ createdAt: -1 })
+      .select("name stock createdAt");
+
+    const lastProductUpdated = await Product.findOne({ owner: ownerId })
+      .sort({ updatedAt: -1 })
+      .select("name stock updatedAt");
+
+    res.json({
+      totalProducts,
+      totalStock: totalStock[0]?.total || 0,
+      lowStockProducts,
+      lastProductCreated,
+      lastProductUpdated,
+    });
+  } catch (error) {
+    res.json({ message: "Error al devolver las estadisticas" });
   }
 };
