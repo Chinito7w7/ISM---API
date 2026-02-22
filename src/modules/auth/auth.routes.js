@@ -1,8 +1,10 @@
 import express from "express";
-import { register, login } from "./auth.controller.js";
+import { register, login, checkStatus } from "./auth.controller.js";
 import authMiddleware from "../../middlewares/auth.middleware.js";
 
 const router = express.Router();
+
+router.get("/check-status", authMiddleware, checkStatus);
 
 router.post("/register", register);
 
