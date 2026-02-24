@@ -1,4 +1,5 @@
 import Product from "./product.model.js";
+import Movement from "../movements/movement.model.js";
 import mongoose from "mongoose";
 export const createProduct = async (req, res) => {
   try {
@@ -8,11 +9,30 @@ export const createProduct = async (req, res) => {
     });
 
     const savedProduct = await product.save();
+
+    //Registrar movimiento
+    await Movement.create({
+      product: savedProduct._id,
+      owner: req.user.id,
+      type: "CREATE",
+      quantity: savedProduct.stock,
+      previousStock: 0,
+      newStock: savedProduct.stock,
+    });
+
     res.status(201).json({
       message: "Producto creado exitosamente",
       product: savedProduct,
     });
   } catch (error) {
+    // Si el error es por duplicado (Código 11000)
+
+    //TODO EVITAR DUPLICACION DE PRODUCTOS
+    // if (error.code === 11000) {
+    //   return res.status(400).json({
+    //     message: "Ya existe un producto con ese nombre",
+    //   });
+    // }
     console.error("Error al crear producto:", error);
     res
       .status(500)
@@ -55,17 +75,34 @@ export const getProductsById = async (req, res) => {
 
 export const updateProduct = async (req, res) => {
   try {
-    const updatedProduct = await Product.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        owner: req.user.id,
-      },
-      req.body,
-      { new: true },
-    );
+    const product = await Product.findOne({
+      _id: req.params.id,
+      owner: req.user.id,
+    });
 
-    if (!updatedProduct) {
+    if (!product) {
       return res.status(404).json({ message: "Producto no encontrado" });
+    }
+
+    const previousStock = product.stock;
+
+    Object.assign(product, req.body);
+
+    const updatedProduct = await product.save();
+
+    if (req.body.stock !== undefined) {
+      const newStock = updatedProduct.stock;
+
+      if (previousStock !== newStock) {
+        await Movement.create({
+          product: updatedProduct._id,
+          owner: req.user.id,
+          type: newStock > previousStock ? "IN" : "OUT",
+          quantity: Math.abs(newStock - previousStock),
+          previousStock,
+          newStock,
+        });
+      }
     }
 
     res.json(updatedProduct);
@@ -84,6 +121,15 @@ export const deleteProduct = async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: "Producto no encontrado" });
     }
+
+    await Movement.create({
+      product: product._id,
+      owner: req.user.id,
+      type: "DELETE",
+      quantity: product.stock,
+      previousStock: product.stock,
+      newStock: 0,
+    });
 
     res.json({ message: "Producto eliminado exitosamente" });
   } catch (error) {
@@ -109,10 +155,13 @@ export const getProductStats = async (req, res) => {
         },
       },
     ]);
-    const lowStockProducts = await Product.countDocuments({
+    const lowStockProducts = await Product.find({
       owner: ownerId,
       stock: { $lte: 5 },
-    }).select("name stock");
+    })
+      .sort({ stock: 1 })
+      .limit(3)
+      .select("name stock");
 
     const lastProductCreated = await Product.findOne({ owner: ownerId })
       .sort({ createdAt: -1 })
