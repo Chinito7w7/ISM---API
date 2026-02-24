@@ -19,7 +19,7 @@ const register = async ({ name, email, password, businessName }) => {
   });
 
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
+    expiresIn: "2h",
   });
 
   return {
