@@ -4,11 +4,12 @@ import jwt from "jsonwebtoken";
 
 const register = async ({ name, email, password, businessName }) => {
   const userExists = await User.findOne({ email });
+
   if (userExists) {
     throw new Error("Usuario ya registrado");
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10); //El segundo dato
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await User.create({
     name,
@@ -17,10 +18,18 @@ const register = async ({ name, email, password, businessName }) => {
     businessName,
   });
 
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
+
   return {
-    id: user._id,
-    name: user.name,
-    email: user.email,
+    token,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      businessName: user.businessName,
+    },
   };
 };
 

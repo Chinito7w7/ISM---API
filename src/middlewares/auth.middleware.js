@@ -2,24 +2,30 @@ import jwt from "jsonwebtoken";
 
 const authMiddleware = (req, res, next) => {
   try {
-    const token = req.headers.authorization;
+    const authHeader = req.headers.authorization;
 
-    if (!token) {
+    if (!authHeader) {
       return res.status(401).json({
         message: "Token requerido",
       });
     }
 
-    const tokenClean = token.split(" ")[1];
+    if (!authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        message: "Formato de token inválido",
+      });
+    }
 
-    const decoded = jwt.verify(tokenClean, process.env.JWT_SECRET);
+    const token = authHeader.split(" ")[1];
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = decoded;
 
     next();
   } catch (error) {
     return res.status(401).json({
-      message: "Token invalido token",
+      message: "Token inválido o expirado",
     });
   }
 };

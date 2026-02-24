@@ -1,4 +1,6 @@
 import { authService } from "./auth.service.js";
+import jwt from "jsonwebtoken";
+import User from "../users/user.model.js";
 
 export const register = async (req, res) => {
   try {
@@ -20,10 +22,19 @@ export const login = async (req, res) => {
 
 export const checkStatus = async (req, res) => {
   try {
-    const user = req.user;
+    const userId = req.user.id;
+
+    const user = await User.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Usuario no encontrado",
+      });
+    }
+
     const newToken = jwt.sign(
       {
-        id: user.id,
+        id: user._id,
       },
       process.env.JWT_SECRET,
       {
@@ -36,6 +47,7 @@ export const checkStatus = async (req, res) => {
       token: newToken,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       message: "Error verificando el estado de autorización",
     });
