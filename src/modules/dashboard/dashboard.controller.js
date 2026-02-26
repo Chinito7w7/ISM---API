@@ -55,7 +55,9 @@ export const getDashboard = async (req, res) => {
     })
       .sort({ createdAt: -1 })
       .limit(5)
-      .select("productName type quantity createdAt");
+      .select(
+        "productName type quantity createdAt previousStock newStock updatedAt owner",
+      );
 
     // Movimientos de hoy
     const today = new Date();
