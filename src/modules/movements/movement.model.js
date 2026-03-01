@@ -8,6 +8,10 @@ const movementSchema = new Schema(
       ref: "Product",
       required: true,
     },
+    productSnapshot: {
+      name: { type: String, required: true },
+      category: { type: String },
+    },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

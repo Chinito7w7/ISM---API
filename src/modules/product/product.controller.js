@@ -13,6 +13,10 @@ export const createProduct = async (req, res) => {
     //Registrar movimiento
     await Movement.create({
       product: savedProduct._id,
+      productSnapshot: {
+        name: savedProduct.name,
+        category: savedProduct.category,
+      },
       owner: req.user.id,
       type: "CREATE",
       quantity: savedProduct.stock,
@@ -25,14 +29,6 @@ export const createProduct = async (req, res) => {
       product: savedProduct,
     });
   } catch (error) {
-    // Si el error es por duplicado (Código 11000)
-
-    //TODO EVITAR DUPLICACION DE PRODUCTOS
-    // if (error.code === 11000) {
-    //   return res.status(400).json({
-    //     message: "Ya existe un producto con ese nombre",
-    //   });
-    // }
     console.error("Error al crear producto:", error);
     res
       .status(500)
@@ -40,23 +36,6 @@ export const createProduct = async (req, res) => {
   }
 };
 
-// export const getProducts = async (req, res) => {
-//   try {
-//     const page = Number(req.query.page) || 1;
-//     const limit = Number(req.query.limit) || 10;
-
-//     const skip = (page - 1) * limit;
-
-//     const products = await Product.find({ owner: req.user.id })
-//       .skip(skip)
-//       .limit(limit)
-//       .sort({ createdAt: -1 });
-
-//     res.json(products);
-//   } catch (error) {
-//     res.status(500).json({ message: "Error al buscar productos" });
-//   }
-// };
 export const getProducts = async (req, res) => {
   try {
     const products = await Product.find({ owner: req.user.id }).sort({
@@ -107,6 +86,10 @@ export const updateProduct = async (req, res) => {
       if (previousStock !== newStock) {
         await Movement.create({
           product: updatedProduct._id,
+          productSnapshot: {
+            name: updatedProduct.name,
+            category: updatedProduct.category,
+          },
           owner: req.user.id,
           type: newStock > previousStock ? "IN" : "OUT",
           quantity: Math.abs(newStock - previousStock),
@@ -135,6 +118,10 @@ export const deleteProduct = async (req, res) => {
 
     await Movement.create({
       product: product._id,
+      productSnapshot: {
+        name: product.name,
+        category: product.category,
+      },
       owner: req.user.id,
       type: "DELETE",
       quantity: product.stock,
