@@ -50,14 +50,25 @@ export const getDashboard = async (req, res) => {
       .select("name stock");
 
     // Últimos movimientos
-    const latestMovements = await Movement.find({
+    const latestMovementsRaw = await Movement.find({
       owner: ownerId,
     })
+      .populate("product", "name")
       .sort({ createdAt: -1 })
-      .limit(5)
-      .select(
-        "productName type quantity createdAt previousStock newStock updatedAt owner",
-      );
+      .limit(5);
+
+    const latestMovements = latestMovementsRaw.map((move) => ({
+      _id: move._id,
+      productName:
+        move.product?.name ||
+        move.productSnapshot?.name ||
+        "Producto eliminado",
+      type: move.type,
+      quantity: move.quantity,
+      previousStock: move.previousStock,
+      newStock: move.newStock,
+      createdAt: move.createdAt,
+    }));
 
     // Movimientos de hoy
     const today = new Date();
